@@ -43,12 +43,14 @@ type Msg
 (halfWidth, halfHeight) = (gameWidth/2, gameHeight/2)
 (iHalfWidth, iHalfHeight) = (gameWidth//2, gameHeight//2)
 
-playerRadius : Float
-playerRadius = gameWidth / 10.0
 playerSize: Float
 playerSize = 10.0
 playerSpeed : Float
 playerSpeed = 0.06
+playerFwdSpeed : Float
+playerFwdSpeed = 4
+playerGrowth : Int
+playerGrowth = 10
 bgBlack : Color
 bgBlack =
   rgb 20 20 20
@@ -80,21 +82,37 @@ onFrame : Time -> Game -> (Game, Cmd Msg)
 onFrame time game =
   let
     updatedPlayer = updatePlayer game.direction game
+    newPlayer = if isDead updatedPlayer then initialPlayer else updatedPlayer
     nextCmd = if willEatFood updatedPlayer game.food then generateFoodPosition else Cmd.none
   in
     ( { game |
-        player = updatedPlayer
+        player = newPlayer
     }, nextCmd )
 
 willEatFood: Player -> Point -> Bool
 willEatFood player food =
-    case head player.points of
-        Nothing -> False
-        Just point -> isPointInCircle point food (playerSize*2)
+  case head player.points of
+      Nothing -> False
+      Just point -> intersects point food playerSize
 
-isPointInCircle: Point -> Point -> Float -> Bool
-isPointInCircle point circleCenter radius =
-    sqrt ((point.x-circleCenter.x)*(point.x-circleCenter.x) + (point.y-circleCenter.y)*(point.y-circleCenter.y)) < radius
+isDead: Player -> Bool
+isDead player =
+  let
+    maybeHead = head player.points
+  in
+    case maybeHead of
+      Nothing -> False
+      Just headPoint ->
+        any (\p -> (intersects headPoint p playerSize)) (drop 20 player.points)
+
+intersects: Point -> Point -> Float -> Bool
+intersects c1 c2 radius =
+  let
+    distanceX = c1.x - c2.x
+    distanceY = c1.y - c2.y
+    radiusSum = radius*2
+  in
+    distanceX * distanceX + distanceY * distanceY <= radiusSum * radiusSum
 
 updatePlayerAngle: Float -> Direction -> Float
 updatePlayerAngle angle dir =
@@ -118,9 +136,9 @@ updatePlayerPosition player angle =
        newHead =
                 case head player.points of
                     Nothing ->
-                        Point (2*cos angle) (2*sin angle)
+                        Point (playerFwdSpeed*cos angle) (playerFwdSpeed*sin angle)
                     Just point ->
-                        Point (point.x+(4*cos angle)) (point.y+(4*sin angle))
+                        Point (point.x+(playerFwdSpeed*cos angle)) (point.y+(playerFwdSpeed*sin angle))
     in
         newHead :: player.points |> (\l -> if length l > player.length then take player.length l else l)
     
@@ -130,7 +148,7 @@ updatePlayer dir {player,food} =
   let
     newAngle = updatePlayerAngle player.angle dir
     points = updatePlayerPosition player newAngle
-    newLength = if willEatFood { player | points = points } food then player.length+10 else player.length
+    newLength = if willEatFood { player | points = points } food then player.length+playerGrowth else player.length
 
   in
     { player | angle = newAngle, points = points, length = newLength }
@@ -173,12 +191,16 @@ main =
   , subscriptions = subscriptions }
 
 
+initialPlayer: Player
+initialPlayer =
+  Player (degrees 0) [] 10
+
 init : (Game, Cmd Msg)
 init =
   let
     ( keyboardModel, keyboardCmd ) = Keyboard.init
   in
-    ( { player = Player (degrees 0) [] 10,
+    ( { player = initialPlayer,
         food = Point 0 0,
         keyboardModel = keyboardModel,
         direction = Still
@@ -188,7 +210,7 @@ init =
 
 generateFoodPosition: Cmd Msg
 generateFoodPosition =
-    Random.generate NewFood (Random.pair (Random.float -halfWidth halfWidth) (Random.float -halfHeight halfHeight))
+    Random.generate NewFood (Random.pair (Random.float (-halfWidth+50) (halfWidth-50)) (Random.float (-halfHeight+50) (halfHeight-50)))
 
 subscriptions : Game -> Sub Msg
 subscriptions game =
