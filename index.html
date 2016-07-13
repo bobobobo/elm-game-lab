@@ -11885,15 +11885,9 @@ var _elm_lang$core$Random$cmdMap = F2(
 			A2(_elm_lang$core$Random$map, func, _p79._0));
 	});
 _elm_lang$core$Native_Platform.effectManagers['Random'] = {pkg: 'elm-lang/core', init: _elm_lang$core$Random$init, onEffects: _elm_lang$core$Random$onEffects, onSelfMsg: _elm_lang$core$Random$onSelfMsg, tag: 'cmd', cmdMap: _elm_lang$core$Random$cmdMap};
-var _bobobobo$elm_game_lab$Main$moveRadial = F2(
-	function (angle, radius) {
-		return _evancz$elm_graphics$Collage$move(
-			{
-				ctor: '_Tuple2',
-				_0: radius * _elm_lang$core$Basics$cos(angle),
-				_1: radius * _elm_lang$core$Basics$sin(angle)
-			});
-	});
+var _bobobobo$elm_game_lab$Main$randomPosition = function (size) {
+	return A2(_elm_lang$core$Random$float, (0 - size) + 50, size - 50);
+};
 var _bobobobo$elm_game_lab$Main$intersects = F3(
 	function (c1, c2, radius) {
 		var radiusSum = radius * 2;
@@ -11901,10 +11895,16 @@ var _bobobobo$elm_game_lab$Main$intersects = F3(
 		var distanceX = c1.x - c2.x;
 		return _elm_lang$core$Native_Utils.cmp((distanceX * distanceX) + (distanceY * distanceY), radiusSum * radiusSum) < 1;
 	});
+var _bobobobo$elm_game_lab$Main$isPointInCircle = F3(
+	function (point, circleCenter, radius) {
+		return _elm_lang$core$Native_Utils.cmp(
+			_elm_lang$core$Basics$sqrt(((point.x - circleCenter.x) * (point.x - circleCenter.x)) + ((point.y - circleCenter.y) * (point.y - circleCenter.y))),
+			radius) < 0;
+	});
 var _bobobobo$elm_game_lab$Main$bgBlack = A3(_elm_lang$core$Color$rgb, 20, 20, 20);
 var _bobobobo$elm_game_lab$Main$playerGrowth = 10;
 var _bobobobo$elm_game_lab$Main$playerFwdSpeed = 4;
-var _bobobobo$elm_game_lab$Main$playerSpeed = 6.0e-2;
+var _bobobobo$elm_game_lab$Main$playerSpeed = 0.12;
 var _bobobobo$elm_game_lab$Main$playerSize = 10.0;
 var _bobobobo$elm_game_lab$Main$willEatFood = F2(
 	function (player, food) {
@@ -11915,20 +11915,6 @@ var _bobobobo$elm_game_lab$Main$willEatFood = F2(
 			return A3(_bobobobo$elm_game_lab$Main$intersects, _p0._0, food, _bobobobo$elm_game_lab$Main$playerSize);
 		}
 	});
-var _bobobobo$elm_game_lab$Main$isDead = function (player) {
-	var maybeHead = _elm_lang$core$List$head(player.points);
-	var _p1 = maybeHead;
-	if (_p1.ctor === 'Nothing') {
-		return false;
-	} else {
-		return A2(
-			_elm_lang$core$List$any,
-			function (p) {
-				return A3(_bobobobo$elm_game_lab$Main$intersects, _p1._0, p, _bobobobo$elm_game_lab$Main$playerSize);
-			},
-			A2(_elm_lang$core$List$drop, 20, player.points));
-	}
-};
 var _bobobobo$elm_game_lab$Main$makePlayer = function (player) {
 	var angle = player.angle;
 	return A2(
@@ -11936,31 +11922,28 @@ var _bobobobo$elm_game_lab$Main$makePlayer = function (player) {
 		F2(
 			function (i, p) {
 				return A2(
-					_evancz$elm_graphics$Collage$rotate,
-					angle,
+					_evancz$elm_graphics$Collage$move,
+					{ctor: '_Tuple2', _0: p.x, _1: p.y},
 					A2(
-						_evancz$elm_graphics$Collage$move,
-						{ctor: '_Tuple2', _0: p.x, _1: p.y},
-						A2(
-							_evancz$elm_graphics$Collage$filled,
-							A3(
-								_elm_lang$core$Color$hsl,
-								_elm_lang$core$Basics$toFloat(i),
-								1,
-								0.5),
-							_evancz$elm_graphics$Collage$circle(_bobobobo$elm_game_lab$Main$playerSize))));
+						_evancz$elm_graphics$Collage$filled,
+						A3(
+							_elm_lang$core$Color$hsl,
+							_elm_lang$core$Basics$toFloat(i) * 3.0e-2,
+							1,
+							0.5),
+						_evancz$elm_graphics$Collage$circle(_bobobobo$elm_game_lab$Main$playerSize)));
 			}),
 		player.points);
 };
-var _bobobobo$elm_game_lab$Main$_p2 = {ctor: '_Tuple2', _0: 1024, _1: 576};
-var _bobobobo$elm_game_lab$Main$gameWidth = _bobobobo$elm_game_lab$Main$_p2._0;
-var _bobobobo$elm_game_lab$Main$gameHeight = _bobobobo$elm_game_lab$Main$_p2._1;
-var _bobobobo$elm_game_lab$Main$_p3 = {ctor: '_Tuple2', _0: _bobobobo$elm_game_lab$Main$gameWidth / 2, _1: _bobobobo$elm_game_lab$Main$gameHeight / 2};
-var _bobobobo$elm_game_lab$Main$halfWidth = _bobobobo$elm_game_lab$Main$_p3._0;
-var _bobobobo$elm_game_lab$Main$halfHeight = _bobobobo$elm_game_lab$Main$_p3._1;
-var _bobobobo$elm_game_lab$Main$_p4 = {ctor: '_Tuple2', _0: (_bobobobo$elm_game_lab$Main$gameWidth / 2) | 0, _1: (_bobobobo$elm_game_lab$Main$gameHeight / 2) | 0};
-var _bobobobo$elm_game_lab$Main$iHalfWidth = _bobobobo$elm_game_lab$Main$_p4._0;
-var _bobobobo$elm_game_lab$Main$iHalfHeight = _bobobobo$elm_game_lab$Main$_p4._1;
+var _bobobobo$elm_game_lab$Main$_p1 = {ctor: '_Tuple2', _0: 1024, _1: 576};
+var _bobobobo$elm_game_lab$Main$gameWidth = _bobobobo$elm_game_lab$Main$_p1._0;
+var _bobobobo$elm_game_lab$Main$gameHeight = _bobobobo$elm_game_lab$Main$_p1._1;
+var _bobobobo$elm_game_lab$Main$_p2 = {ctor: '_Tuple2', _0: _bobobobo$elm_game_lab$Main$gameWidth / 2, _1: _bobobobo$elm_game_lab$Main$gameHeight / 2};
+var _bobobobo$elm_game_lab$Main$halfWidth = _bobobobo$elm_game_lab$Main$_p2._0;
+var _bobobobo$elm_game_lab$Main$halfHeight = _bobobobo$elm_game_lab$Main$_p2._1;
+var _bobobobo$elm_game_lab$Main$_p3 = {ctor: '_Tuple2', _0: (_bobobobo$elm_game_lab$Main$gameWidth / 2) | 0, _1: (_bobobobo$elm_game_lab$Main$gameHeight / 2) | 0};
+var _bobobobo$elm_game_lab$Main$iHalfWidth = _bobobobo$elm_game_lab$Main$_p3._0;
+var _bobobobo$elm_game_lab$Main$iHalfHeight = _bobobobo$elm_game_lab$Main$_p3._1;
 var _bobobobo$elm_game_lab$Main$view = function (game) {
 	var food = A2(
 		_evancz$elm_graphics$Collage$move,
@@ -11993,21 +11976,63 @@ var _bobobobo$elm_game_lab$Main$Point = F2(
 	function (a, b) {
 		return {x: a, y: b};
 	});
+var _bobobobo$elm_game_lab$Main$isDead = function (player) {
+	var maybeHead = _elm_lang$core$List$head(player.points);
+	var headHitBody = function () {
+		var _p4 = maybeHead;
+		if (_p4.ctor === 'Nothing') {
+			return false;
+		} else {
+			return A2(
+				_elm_lang$core$List$any,
+				function (p) {
+					return A3(_bobobobo$elm_game_lab$Main$intersects, _p4._0, p, _bobobobo$elm_game_lab$Main$playerSize);
+				},
+				A2(_elm_lang$core$List$drop, 20, player.points));
+		}
+	}();
+	var headHitWall = function () {
+		var _p5 = maybeHead;
+		if (_p5.ctor === 'Nothing') {
+			return false;
+		} else {
+			var _p6 = _p5._0;
+			return A3(
+				_bobobobo$elm_game_lab$Main$isPointInCircle,
+				A2(_bobobobo$elm_game_lab$Main$Point, _bobobobo$elm_game_lab$Main$halfWidth, _p6.y),
+				_p6,
+				_bobobobo$elm_game_lab$Main$playerSize) || (A3(
+				_bobobobo$elm_game_lab$Main$isPointInCircle,
+				A2(_bobobobo$elm_game_lab$Main$Point, 0 - _bobobobo$elm_game_lab$Main$halfWidth, _p6.y),
+				_p6,
+				_bobobobo$elm_game_lab$Main$playerSize) || (A3(
+				_bobobobo$elm_game_lab$Main$isPointInCircle,
+				A2(_bobobobo$elm_game_lab$Main$Point, _p6.x, _bobobobo$elm_game_lab$Main$halfHeight),
+				_p6,
+				_bobobobo$elm_game_lab$Main$playerSize) || A3(
+				_bobobobo$elm_game_lab$Main$isPointInCircle,
+				A2(_bobobobo$elm_game_lab$Main$Point, _p6.x, 0 - _bobobobo$elm_game_lab$Main$halfHeight),
+				_p6,
+				_bobobobo$elm_game_lab$Main$playerSize)));
+		}
+	}();
+	return headHitBody || headHitWall;
+};
 var _bobobobo$elm_game_lab$Main$updatePlayerPosition = F2(
 	function (player, angle) {
 		var newHead = function () {
-			var _p5 = _elm_lang$core$List$head(player.points);
-			if (_p5.ctor === 'Nothing') {
+			var _p7 = _elm_lang$core$List$head(player.points);
+			if (_p7.ctor === 'Nothing') {
 				return A2(
 					_bobobobo$elm_game_lab$Main$Point,
 					_bobobobo$elm_game_lab$Main$playerFwdSpeed * _elm_lang$core$Basics$cos(angle),
 					_bobobobo$elm_game_lab$Main$playerFwdSpeed * _elm_lang$core$Basics$sin(angle));
 			} else {
-				var _p6 = _p5._0;
+				var _p8 = _p7._0;
 				return A2(
 					_bobobobo$elm_game_lab$Main$Point,
-					_p6.x + (_bobobobo$elm_game_lab$Main$playerFwdSpeed * _elm_lang$core$Basics$cos(angle)),
-					_p6.y + (_bobobobo$elm_game_lab$Main$playerFwdSpeed * _elm_lang$core$Basics$sin(angle)));
+					_p8.x + (_bobobobo$elm_game_lab$Main$playerFwdSpeed * _elm_lang$core$Basics$cos(angle)),
+					_p8.y + (_bobobobo$elm_game_lab$Main$playerFwdSpeed * _elm_lang$core$Basics$sin(angle)));
 			}
 		}();
 		return function (l) {
@@ -12041,19 +12066,19 @@ var _bobobobo$elm_game_lab$Main$updatePlayerAngle = F2(
 		return (_elm_lang$core$Native_Utils.cmp(newAngle, 0) < 0) ? (newAngle + (2 * _elm_lang$core$Basics$pi)) : ((_elm_lang$core$Native_Utils.cmp(newAngle, 2 * _elm_lang$core$Basics$pi) > 0) ? (newAngle - (2 * _elm_lang$core$Basics$pi)) : newAngle);
 	});
 var _bobobobo$elm_game_lab$Main$updatePlayer = F2(
-	function (dir, _p7) {
-		var _p8 = _p7;
-		var _p9 = _p8.player;
-		var newAngle = A2(_bobobobo$elm_game_lab$Main$updatePlayerAngle, _p9.angle, dir);
-		var points = A2(_bobobobo$elm_game_lab$Main$updatePlayerPosition, _p9, newAngle);
+	function (dir, _p9) {
+		var _p10 = _p9;
+		var _p11 = _p10.player;
+		var newAngle = A2(_bobobobo$elm_game_lab$Main$updatePlayerAngle, _p11.angle, dir);
+		var points = A2(_bobobobo$elm_game_lab$Main$updatePlayerPosition, _p11, newAngle);
 		var newLength = A2(
 			_bobobobo$elm_game_lab$Main$willEatFood,
 			_elm_lang$core$Native_Utils.update(
-				_p9,
+				_p11,
 				{points: points}),
-			_p8.food) ? (_p9.length + _bobobobo$elm_game_lab$Main$playerGrowth) : _p9.length;
+			_p10.food) ? (_p11.length + _bobobobo$elm_game_lab$Main$playerGrowth) : _p11.length;
 		return _elm_lang$core$Native_Utils.update(
-			_p9,
+			_p11,
 			{angle: newAngle, points: points, length: newLength});
 	});
 var _bobobobo$elm_game_lab$Main$NewFood = function (a) {
@@ -12064,8 +12089,8 @@ var _bobobobo$elm_game_lab$Main$generateFoodPosition = A2(
 	_bobobobo$elm_game_lab$Main$NewFood,
 	A2(
 		_elm_lang$core$Random$pair,
-		A2(_elm_lang$core$Random$float, (0 - _bobobobo$elm_game_lab$Main$halfWidth) + 50, _bobobobo$elm_game_lab$Main$halfWidth - 50),
-		A2(_elm_lang$core$Random$float, (0 - _bobobobo$elm_game_lab$Main$halfHeight) + 50, _bobobobo$elm_game_lab$Main$halfHeight - 50)));
+		_bobobobo$elm_game_lab$Main$randomPosition(_bobobobo$elm_game_lab$Main$halfWidth),
+		_bobobobo$elm_game_lab$Main$randomPosition(_bobobobo$elm_game_lab$Main$halfHeight)));
 var _bobobobo$elm_game_lab$Main$onFrame = F2(
 	function (time, game) {
 		var updatedPlayer = A2(_bobobobo$elm_game_lab$Main$updatePlayer, game.direction, game);
@@ -12084,9 +12109,9 @@ var _bobobobo$elm_game_lab$Main$KeyboardExtraMsg = function (a) {
 };
 var _bobobobo$elm_game_lab$Main$onUserInput = F2(
 	function (keyMsg, game) {
-		var _p10 = A2(_ohanhi$keyboard_extra$Keyboard_Extra$update, keyMsg, game.keyboardModel);
-		var keyboardModel = _p10._0;
-		var keyboardCmd = _p10._1;
+		var _p12 = A2(_ohanhi$keyboard_extra$Keyboard_Extra$update, keyMsg, game.keyboardModel);
+		var keyboardModel = _p12._0;
+		var keyboardCmd = _p12._1;
 		var direction = (_elm_lang$core$Native_Utils.cmp(
 			_ohanhi$keyboard_extra$Keyboard_Extra$arrows(keyboardModel).x,
 			0) < 0) ? _bobobobo$elm_game_lab$Main$Left : ((_elm_lang$core$Native_Utils.cmp(
@@ -12102,28 +12127,28 @@ var _bobobobo$elm_game_lab$Main$onUserInput = F2(
 	});
 var _bobobobo$elm_game_lab$Main$update = F2(
 	function (msg, game) {
-		var _p11 = msg;
-		switch (_p11.ctor) {
+		var _p13 = msg;
+		switch (_p13.ctor) {
 			case 'KeyboardExtraMsg':
-				return A2(_bobobobo$elm_game_lab$Main$onUserInput, _p11._0, game);
+				return A2(_bobobobo$elm_game_lab$Main$onUserInput, _p13._0, game);
 			case 'Step':
-				return A2(_bobobobo$elm_game_lab$Main$onFrame, _p11._0, game);
+				return A2(_bobobobo$elm_game_lab$Main$onFrame, _p13._0, game);
 			default:
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						game,
 						{
-							food: A2(_bobobobo$elm_game_lab$Main$Point, _p11._0._0, _p11._0._1)
+							food: A2(_bobobobo$elm_game_lab$Main$Point, _p13._0._0, _p13._0._1)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
 	});
 var _bobobobo$elm_game_lab$Main$init = function () {
-	var _p12 = _ohanhi$keyboard_extra$Keyboard_Extra$init;
-	var keyboardModel = _p12._0;
-	var keyboardCmd = _p12._1;
+	var _p14 = _ohanhi$keyboard_extra$Keyboard_Extra$init;
+	var keyboardModel = _p14._0;
+	var keyboardCmd = _p14._1;
 	return {
 		ctor: '_Tuple2',
 		_0: {
