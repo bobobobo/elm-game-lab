@@ -46,7 +46,7 @@ type Msg
 playerSize: Float
 playerSize = 10.0
 playerSpeed : Float
-playerSpeed = 0.06
+playerSpeed = 0.12
 playerFwdSpeed : Float
 playerFwdSpeed = 4
 playerGrowth : Int
@@ -99,11 +99,25 @@ isDead: Player -> Bool
 isDead player =
   let
     maybeHead = head player.points
+    headHitBody = case maybeHead of
+                    Nothing -> False
+                    Just headPoint ->
+                      any (\p -> (intersects headPoint p playerSize)) (drop 20 player.points)
+    headHitWall = 
+                  case maybeHead of
+                    Nothing -> False
+                    Just headPoint ->
+                      isPointInCircle (Point halfWidth headPoint.y) headPoint playerSize ||
+                      isPointInCircle (Point -halfWidth headPoint.y) headPoint playerSize ||
+                      isPointInCircle (Point headPoint.x halfHeight) headPoint playerSize ||
+                      isPointInCircle (Point headPoint.x -halfHeight) headPoint playerSize
+
   in
-    case maybeHead of
-      Nothing -> False
-      Just headPoint ->
-        any (\p -> (intersects headPoint p playerSize)) (drop 20 player.points)
+    headHitBody || headHitWall
+
+isPointInCircle: Point -> Point -> Float -> Bool
+isPointInCircle point circleCenter radius =
+  sqrt ((point.x-circleCenter.x)*(point.x-circleCenter.x) + (point.y-circleCenter.y)*(point.y-circleCenter.y)) < radius
 
 intersects: Point -> Point -> Float -> Bool
 intersects c1 c2 radius =
@@ -153,11 +167,6 @@ updatePlayer dir {player,food} =
   in
     { player | angle = newAngle, points = points, length = newLength }
 
-
-moveRadial : Float -> Float -> Form -> Form
-moveRadial angle radius =
-  move (radius * cos angle, radius * sin angle)
-
 makePlayer : Player -> List Form
 makePlayer player =
   let
@@ -165,9 +174,8 @@ makePlayer player =
   in
     indexedMap  (\i p -> 
         circle playerSize
-            |> filled (hsl (toFloat i) 1 0.5)
-            |> move (p.x, p.y)
-            |> rotate angle)
+            |> filled (hsl ((toFloat i)*0.03) 1 0.5)
+            |> move (p.x, p.y))
         player.points
 view : Game -> Html.Html Msg
 view game =
@@ -208,9 +216,14 @@ init =
     , Cmd.batch [Cmd.map KeyboardExtraMsg keyboardCmd, generateFoodPosition]
     )
 
+randomPosition: Float -> Random.Generator Float
+randomPosition size =
+  Random.float (-size+50) (size-50)
+
 generateFoodPosition: Cmd Msg
 generateFoodPosition =
-    Random.generate NewFood (Random.pair (Random.float (-halfWidth+50) (halfWidth-50)) (Random.float (-halfHeight+50) (halfHeight-50)))
+    Random.generate NewFood
+      <| Random.pair (randomPosition halfWidth) (randomPosition halfHeight)
 
 subscriptions : Game -> Sub Msg
 subscriptions game =
